@@ -1,13 +1,47 @@
-import { useLocation, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
 
 export default function BlogDetail() {
-    const location = useLocation();
+    const { id } = useParams();
     const navigate = useNavigate();
-    const { article } = (location.state as { article: any })
+    const [article, setArticle] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    if (!article) return <p className="text-center py-10">Article not found!</p>;
+    const API_KEY = "b469404654524963aebd33a4ea2e81ca";
+    const URL = `https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=${API_KEY}`;
 
-    console.log("Individual Article Detail:", article);
+    useEffect(() => {
+        const articleIndex = parseInt(id || "0");
+
+        if (articleIndex >= 10) {
+            setLoading(false);
+            return;
+        }
+
+        fetch(URL)
+            .then((res) => res.json())
+            .then((data) => {
+                const selectedArticle = data.articles[articleIndex];
+                setArticle(selectedArticle);
+                console.log("Individual Article Detail:", selectedArticle);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error("Error fetching data:", err);
+                setLoading(false);
+            });
+    }, [id]);
+
+    if (loading) return <p className="text-center py-10">Loading...</p>;
+    if (!article || parseInt(id || "0") >= 10) {
+        return (
+            <div className="text-center py-20">
+                <h1 className="text-2xl font-bold text-red-500">Article Not Found!</h1>
+                <p className="text-gray-500">Please provide an index between 0 and 9.</p>
+                <button onClick={() => navigate("/blog")} className="text-blue-500 underline mt-4">Back to Blogs</button>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-3xl mx-auto border border-gray-100">
